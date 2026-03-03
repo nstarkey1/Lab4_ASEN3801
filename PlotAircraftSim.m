@@ -1,4 +1,4 @@
-function x = PlotAircraftSim(time, aircraft_state_array, control_input_array, fig, col)
+function PlotAircraftSim(time, aircraft_state_array, control_input_array, fig, col)
 %[x,y,z,roll,pit,yaw,u,v,w,p,q,r] = aircraft_state_array;
 %[Z,L,M,N] = control_input_array;
 
