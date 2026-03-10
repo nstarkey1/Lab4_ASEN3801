@@ -23,9 +23,17 @@ function var_dot = QuadrotorEOM(t, var, g, m, I, d, km, nu, mu, motor_forces)
     Iz = I(3, 3);
     
     % Forces and moments
-    L = 0; M = 0; N = 0;
-    Lc = 0; Mc = 0; Nc = 0;
-    Xc = 0; Yc = 0; Zc = -9.81;
+    L = -1*mu*sqrt(p^2+q^2+r^2)*p; 
+    M = -1*mu*sqrt(p^2+q^2+r^2)*q; 
+    N = -1*mu*sqrt(p^2+q^2+r^2)*r;
+    
+    Lc = 0; 
+    Mc = 0; 
+    Nc = 0;
+    
+    Xc = 0; 
+    Yc = 0; 
+    Zc = -9.81;
     
     % Trig
     c_theta = cos(theta); s_theta = sin(theta);
@@ -43,9 +51,9 @@ function var_dot = QuadrotorEOM(t, var, g, m, I, d, km, nu, mu, motor_forces)
     
     % Drag
     Va = sqrt(ue^2 + ve^2 + we^2); 
-    X = -1 * mu * Va * ue;
-    Y = -1 * mu * Va * ve;
-    Z = -1 * mu * Va * we;
+    X = -1 * nu * Va * ue;
+    Y = -1 * nu * Va * ve;
+    Z = -1 * nu * Va * we;
 
     % Dynamics
     u_dot = r*ve - q*we - g*sin(theta) + X/m + Xc/m;
