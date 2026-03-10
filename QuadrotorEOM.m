@@ -1,64 +1,97 @@
-%Contributors: Maxwell Meador, Robert Reynoso
-%Course number: ASEN 3801
-%File name: QuadrotorEOM
-%Created: 3/3/2026
-
 function var_dot = QuadrotorEOM(t, var, g, m, I, d, km, nu, mu, motor_forces)
+% Quadrotor nonlinear equations of motion
+% var = [xE; yE; zE; phi; theta; psi; u; v; w; p; q; r]
+% motor_forces = [f1; f2; f3; f4]
 
-    xe = var(1); 
-    ye = var(2);
-    ze = var(3);
-    phi = var(4);
+
+    %% States
+    xE    = var(1);
+    yE    = var(2);
+    zE    = var(3);
+    phi   = var(4);
     theta = var(5);
-    psi = var(6);
-    ue = var(7);
-    ve = var(8);
-    we = var(9);
-    p = var(10);
-    q = var(11);
-    r = var(12);
-    
-    Ix = I(1, 1);
-    Iy = I(2, 2);
-    Iz = I(3, 3);
-    
-    % Forces and moments
-    L = 0; M = 0; N = 0;
-    Lc = 0; Mc = 0; Nc = 0;
-    Xc = 0; Yc = 0; Zc = -g*m ;
-    
-    % Trig
-    c_theta = cos(theta);
-    s_theta = sin(theta);
-    c_psi = cos(psi);
-    s_psi = sin(psi);
-    c_phi = cos(phi);
-    s_phi = sin(phi);
+    psi   = var(6);
+    u     = var(7);
+    v     = var(8);
+    w     = var(9);
+    p     = var(10);
+    q     = var(11);
+    r     = var(12);
 
-    % Kinematics
-    xe_dot = (c_theta*c_psi)*ue + (s_phi*s_theta*c_psi - c_phi*s_psi)*ve + (c_phi*s_theta*c_psi + s_phi*s_psi)*we;
-    ye_dot = (c_theta*s_psi)*ue + (s_phi*s_theta*s_psi + c_phi*c_psi)*ve + (c_phi*s_theta*s_psi - s_phi*c_psi)*we;
-    ze_dot = (-s_theta)*ue + (s_phi*c_theta)*ve + (c_phi*c_theta)*we;
-    
-    phi_dot   = p + (sin(phi)*tan(theta))*q + (cos(phi)*tan(theta))*r;
-    theta_dot = (cos(phi))*q - (sin(phi))*r;
-    psi_dot   = (sin(phi)*sec(theta))*q + (cos(phi)*sec(theta))*r;
-    
-    % Drag
-    Va = sqrt(ue^2 + ve^2 + we^2); 
-    X = 0;%-1 * mu * Va * ue;
-    Y = 0;%-1 * mu * Va * ve;
-    Z = 0;%-1 * mu * Va * we;
+    %% Inertia values
+    Ix = I(1,1);
+    Iy = I(2,2);
+    Iz = I(3,3);
 
-    % Dynamics
-    u_dot = r*ve - q*we - g*sin(theta) + X/m + Xc/m;
-    v_dot = p*we - r*ue + g*cos(theta)*sin(phi)+ Y/m + Yc/m;
-    w_dot = g*cos(theta)*cos(phi)+ Zc/m+ Z/m;
-    
-    p_dot = ((Iy - Iz)/Ix)*q*r + L/Ix + Lc/Ix;
-    q_dot = ((Iz - Ix)/Iy)*p*r + M/Iy + Mc/Iy;
-    r_dot = ((Ix - Iy)/Iz)*p*q + N/Iz + Nc/Iz;
-    
-    % State Vector Deriv Return
-    var_dot = [xe_dot; ye_dot; ze_dot; phi_dot; theta_dot; psi_dot; u_dot; v_dot; w_dot; p_dot; q_dot; r_dot];
+    %% Motor forces
+    f1 = motor_forces(1);
+    f2 = motor_forces(2);
+    f3 = motor_forces(3);
+    f4 = motor_forces(4);
+
+    %% Control force and moments from rotors
+    % From lab handout:
+    % Zc = -f1 - f2 - f3 - f4
+    % Lc = d/sqrt(2) * (-f1 - f2 + f3 + f4)
+    % Mc = d/sqrt(2) * ( f1 - f2 - f3 + f4)
+    % Nc = km * (f1 - f2 + f3 - f4)
+    Zc = -(f1 + f2 + f3 + f4);
+    Lc = (d/sqrt(2)) * (-f1 - f2 + f3 + f4);
+    Mc = (d/sqrt(2)) * ( f1 - f2 - f3 + f4);
+    Nc = km * (f1 - f2 + f3 - f4);
+
+    %% Trig shorthand
+    cphi = cos(phi);
+    sphi = sin(phi);
+    cth  = cos(theta);
+    sth  = sin(theta);
+    cpsi = cos(psi);
+    spsi = sin(psi);
+
+    %% Position kinematics (body velocities -> inertial position rates)
+    xE_dot = cth*cpsi*u + (sphi*sth*cpsi - cphi*spsi)*v + (cphi*sth*cpsi + sphi*spsi)*w;
+    yE_dot = cth*spsi*u + (sphi*sth*spsi + cphi*cpsi)*v + (cphi*sth*spsi - sphi*cpsi)*w;
+    zE_dot = -sth*u    + sphi*cth*v                         + cphi*cth*w;
+
+    %% Euler angle kinematics
+    phi_dot   = p + sphi*tan(theta)*q + cphi*tan(theta)*r;
+    theta_dot =     cphi*q            - sphi*r;
+    psi_dot   =     (sphi/cth)*q      + (cphi/cth)*r;
+
+    %% Aerodynamic drag forces
+    % nu = aerodynamic force coefficient
+    Va = sqrt(u^2 + v^2 + w^2);
+    X = -nu * Va * u;
+    Y = -nu * Va * v;
+    Z = -nu * Va * w;
+
+    %% Aerodynamic drag moments
+    % mu = aerodynamic moment coefficient
+    L = -mu * abs(p) * p;
+    M = -mu * abs(q) * q;
+    N = -mu * abs(r) * r;
+
+    %% Translational dynamics in body frame
+    u_dot = r*v - q*w - g*sin(theta)          + X/m;
+    v_dot = p*w - r*u + g*cth*sin(phi)        + Y/m;
+    w_dot = q*u - p*v + g*cth*cphi            + Z/m + Zc/m;
+
+    %% Rotational dynamics in body frame
+    p_dot = ((Iy - Iz)/Ix)*q*r + (L + Lc)/Ix;
+    q_dot = ((Iz - Ix)/Iy)*p*r + (M + Mc)/Iy;
+    r_dot = ((Ix - Iy)/Iz)*p*q + (N + Nc)/Iz;
+
+    %% Return state derivative
+    var_dot = [xE_dot;
+               yE_dot;
+               zE_dot;
+               phi_dot;
+               theta_dot;
+               psi_dot;
+               u_dot;
+               v_dot;
+               w_dot;
+               p_dot;
+               q_dot;
+               r_dot];
 end
