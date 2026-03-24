@@ -1,0 +1,111 @@
+function var_dot = QuadrotorEOM(t, var, g, m, I, d, km, nu, mu, motor_forces)
+
+    %% Unpacking
+
+    xE    = var(1);
+    yE    = var(2);
+    zE    = var(3);
+
+    phi   = var(4);   % roll
+    theta = var(5);   % pitch
+    psi   = var(6);   % yaw
+
+    u     = var(7);
+    v     = var(8);
+    w     = var(9);
+
+    p     = var(10);
+    q     = var(11);
+    r     = var(12);
+
+    Ix = I(1,1);
+    Iy = I(2,2);
+    Iz = I(3,3);
+
+    f1 = motor_forces(1);
+    f2 = motor_forces(2);
+    f3 = motor_forces(3);
+    f4 = motor_forces(4);
+
+    Zc = -(f1 + f2 + f3 + f4);                         % total thrust (negative is up)
+    Lc = (d/sqrt(2)) * (-f1 - f2 + f3 + f4);           % roll
+    Mc = (d/sqrt(2)) * ( f1 - f2 - f3 + f4);           % pitch
+    Nc = km             * ( f1 - f2 + f3 - f4);         % yaw
+
+    cphi = cos(phi);
+    sphi = sin(phi);
+    cth  = cos(theta);
+    sth  = sin(theta);
+    cpsi = cos(psi);
+    spsi = sin(psi);
+    tth  = tan(theta); 
+
+    %% Kinematics
+
+    xE_dot =  (cth*cpsi)*u + (sphi*sth*cpsi - cphi*spsi)*v + (cphi*sth*cpsi + sphi*spsi)*w;
+    yE_dot =  (cth*spsi)*u + (sphi*sth*spsi + cphi*cpsi)*v + (cphi*sth*spsi - sphi*cpsi)*w;
+    zE_dot = -(sth)     *u + (sphi*cth)                 *v + (cphi*cth)                 *w;
+
+    phi_dot   = p + sphi*tth*q + cphi*tth*r;
+    theta_dot =     cphi*q     - sphi*r;
+    psi_dot   =    (sphi/cth)*q + (cphi/cth)*r;
+
+    %% Drag Stuff
+    Va = sqrt(u^2 + v^2 + w^2);
+    Xaero = -nu * Va * u;          % drag force x
+    Yaero = -nu * Va * v;          % drag force y 
+    Zaero = -nu * Va * w;          % drag force z 
+
+    Laero = -mu * abs(p) * p;   % drag moment about body x (opposes roll  rate)
+    Maero = -mu * abs(q) * q;   % drag moment about body y (opposes pitch rate)
+    Naero = -mu * abs(r) * r;   % drag moment about body z (opposes yaw   rate)
+
+    %% ---- Translational dynamics (Newton's 2nd Law in body frame) --------
+    % In the rotating body frame, Newton's law includes Coriolis terms
+    % (the omega x V cross product) that couple the velocity components.
+    %
+    % m * V_dot_body = F_gravity_body + F_aero + F_control - m*(omega x V)
+    %
+    % where omega x V = [q*w - r*v; r*u - p*w; p*v - q*u]
+    %
+    % Gravity in body frame (from NED inertial frame [0; 0; m*g]):
+    %   gx_body = -g*sin(theta)
+    %   gy_body = +g*cos(theta)*sin(phi)
+    %   gz_body = +g*cos(theta)*cos(phi)
+
+    u_dot = r*v - q*w - g*sth          + Xaero/m;
+    v_dot = p*w - r*u + g*cth*sphi     + Yaero/m;
+    w_dot = q*u - p*v + g*cth*cphi     + Zaero/m + Zc/m;
+    % Note on w_dot: gravity pulls the vehicle down (+w direction in NED body z),
+    % and the rotor thrust Zc/m acts upward (Zc is negative by the mixing equation).
+    % At hover trim: g*cos(0)*cos(0) + Zc/m = g - mg/(4*4/m) = 0. ✓
+
+    %% ---- Rotational dynamics (Euler's equations in body frame) ----------
+    % Euler's equations for a rigid body with diagonal inertia:
+    %
+    %   Ix * p_dot = (Iy - Iz)*q*r + L_total
+    %   Iy * q_dot = (Iz - Ix)*p*r + M_total
+    %   Iz * r_dot = (Ix - Iy)*p*q + N_total
+    %
+    % The (Ij - Ik)*...*... terms are the gyroscopic (inertia coupling) terms
+    % that arise because the body is rotating - they couple roll, pitch, and yaw.
+    % L_total = aerodynamic drag moment + control moment
+
+    p_dot = ((Iy - Iz)/Ix)*q*r + (Laero + Lc)/Ix;
+    q_dot = ((Iz - Ix)/Iy)*p*r + (Maero + Mc)/Iy;
+    r_dot = ((Ix - Iy)/Iz)*p*q + (Naero + Nc)/Iz;
+
+    %% ---- Assemble state derivative vector ------------------------------
+    var_dot = [xE_dot;
+               yE_dot;
+               zE_dot;
+               phi_dot;
+               theta_dot;
+               psi_dot;
+               u_dot;
+               v_dot;
+               w_dot;
+               p_dot;
+               q_dot;
+               r_dot];
+end
