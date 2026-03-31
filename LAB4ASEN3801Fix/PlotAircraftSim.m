@@ -123,7 +123,7 @@ ylabel('N_c (N{\cdot}m)')
 xlabel('Time (s)')
 legend('Location', 'best')
 
-%% Fig 6 3D Flight Path
+%%% Fig 6 3D Flight Path
 figure(fig(6))
 plot3(aircraft_state_array(1,:), ...
       aircraft_state_array(2,:), ...
@@ -132,19 +132,21 @@ plot3(aircraft_state_array(1,:), ...
 hold on
 grid on
 axis equal
-xlabel('x_E (m)')
-ylabel('y_E (m)')
-zlabel('Height (m)')
-title('Quadrotor 3D Flight Path')
+xlabel('Inertial x Position (m)')
+ylabel('Inertial y Position (m)')
+zlabel('Inertial Z Position (m)')
+title('3D Position of Quadrotor')
 legend('Location', 'best')
 
+% Start marker (green dot)
 plot3(aircraft_state_array(1,1), ...
       aircraft_state_array(2,1), ...
      -aircraft_state_array(3,1), ...
       'go', 'MarkerFaceColor', 'g', 'MarkerSize', 8, 'HandleVisibility', 'off')
 
+% End marker (red asterisk)
 plot3(aircraft_state_array(1,end), ...
       aircraft_state_array(2,end), ...
      -aircraft_state_array(3,end), ...
-      'ro', 'MarkerFaceColor', 'r', 'MarkerSize', 8, 'HandleVisibility', 'off')
+      'r*', 'MarkerSize', 8, 'HandleVisibility', 'off')
 end
