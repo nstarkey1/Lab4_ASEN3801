@@ -41,7 +41,7 @@ Nc_hover = km*(motor_forces_hover(1) - motor_forces_hover(2) + motor_forces_hove
 ctrl12 = repmat([Zc_hover; Lc_hover; Mc_hover; Nc_hover], 1, length(t12));
 
 if plots12
-    PlotAircraftSim(t12, X12', ctrl12, [1 2 3 4 5 6], 'b');
+    PlotAircraftSim(t12, X12', ctrl12, [1 2 3 4 5 6], 'b', 'Hover (No Drag)');
     sgtitle_figs([1 2 3 4 5 6], 'Task 1.2: Hover trim (no drag)');
 end
 % All states should be at zero
@@ -53,7 +53,7 @@ ode_hover_drag = @(t, var) QuadrotorEOM(t, var, g, m, I, d, km, nu, mu, motor_fo
 ctrl13 = repmat([Zc_hover; Lc_hover; Mc_hover; Nc_hover], 1, length(t13));
 
 if plots12
-    PlotAircraftSim(t13, X13', ctrl13, [11 12 13 14 15 16], 'b');
+    PlotAircraftSim(t13, X13', ctrl13, [11 12 13 14 15 16], 'b', 'Hover (With Drag)');
     sgtitle_figs([11 12 13 14 15 16], 'Task 1.3: Hover trim (with drag)');
 end
 % Should be 0 still if working
@@ -79,7 +79,7 @@ Zc14a = -(4*f_trim_a); Lc14a = 0; Mc14a = 0; Nc14a = 0;
 ctrl14a = repmat([Zc14a; Lc14a; Mc14a; Nc14a], 1, length(t14a));
 
 if plots14
-    PlotAircraftSim(t14a, X14a', ctrl14a, [21 22 23 24 25 26], 'b');
+    PlotAircraftSim(t14a, X14a', ctrl14a, [21 22 23 24 25 26], 'b', '5 m/s East, \psi=0');
     sgtitle_figs([21 22 23 24 25 26], 'Task 1.4a: 5 m/s East trim, psi=0');
 end
 % The only thing that should change I think is xE which seems to be
@@ -107,7 +107,7 @@ Zc14b = -(4*f_trim_b);
 ctrl14b = repmat([Zc14b; 0; 0; 0], 1, length(t14b));
 
 if plots14
-    PlotAircraftSim(t14b, X14b', ctrl14b, [31 32 33 34 35 36], 'b');
+    PlotAircraftSim(t14b, X14b', ctrl14b, [31 32 33 34 35 36], 'b', '5 m/s East, \psi=90°');
     sgtitle_figs([31 32 33 34 35 36], 'Task 1.4b: 5 m/s East trim, psi=90 deg');
 end
 % Same as 1.4a but now its yE that increases
@@ -123,7 +123,7 @@ ode_perturb = @(t, var) QuadrotorEOM(t, var, g, m, I, d, km, nu, mu, motor_force
 ctrl15 = repmat([Zc_hover; 0; 0; 0], 1, length(t15));
 
 if plots15
-    PlotAircraftSim(t15, X15', ctrl15, [41 42 43 44 45 46], 'b');
+    PlotAircraftSim(t15, X15', ctrl15, [41 42 43 44 45 46], 'b', 'Simulation');
     sgtitle_figs([41 42 43 44 45 46], 'Task 1.5: Hover stability (simulated, +5 deg roll)');
 end
 
@@ -136,7 +136,7 @@ X_hw = rt.rt_estim.signals.values';          % (12 x n) state array
 ctrl_hw = zeros(4, length(t_hw));   % no control inputs in the hardware run
 
 if plots15
-    PlotAircraftSim(t_hw, X_hw, ctrl_hw, [41 42 43 44 45 46], 'r');
+    PlotAircraftSim(t_hw, X_hw, ctrl_hw, [41 42 43 44 45 46], 'r', 'Hardware');
     figure(42)
     legend('Simulation', 'Hardware', 'Location', 'best', 'AutoUpdate', 'off');
 end
@@ -172,7 +172,7 @@ for k = 1:length(cases_21)
     figs_k = (100 + k*10) + (1:6);
     
     if plots21    
-        PlotAircraftSim(t_k, X_k', ctrl_k, figs_k, 'b');
+        PlotAircraftSim(t_k, X_k', ctrl_k, figs_k, 'b', 'Nonlinear');
         sgtitle_figs(figs_k, sprintf('Task 2.1 Case %s: %s (NL)', char('a'+k-1), label));
     end
     
@@ -207,7 +207,7 @@ for k = 1:length(cases_21)
     
     if plots22
         % Overlay
-        PlotAircraftSim(t_lin_k, X_lin_k', ctrl_lin_k, figs21{k}, 'r');
+        PlotAircraftSim(t_lin_k, X_lin_k', ctrl_lin_k, figs21{k}, 'r', 'Linearized', '--');
         figure(figs21{k}(1));
         legend('Nonlinear', 'Linearized', 'Location', 'best', 'AutoUpdate', 'off');
     end
@@ -249,7 +249,7 @@ for idx = 1:length(cases_25)
         % Blue: uncontrolled nonlinear
         PlotAircraftSim(t_unc, X_unc', ctrl_unc, figs_25k, 'b');
         % Green: controlled nonlinear
-        PlotAircraftSim(t_ctrl, X_ctrl', ctrl_ctrl, figs_25k, 'g');
+        PlotAircraftSim(t_ctrl, X_ctrl', ctrl_ctrl, figs_25k, 'g', 'Rate Feedback', '--');
         
         figure(figs_25k(1));
         legend('Uncontrolled', 'Rate Feedback', 'Location', 'best', 'AutoUpdate', 'off');
