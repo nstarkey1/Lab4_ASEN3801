@@ -18,13 +18,13 @@ t_span = [0 10];
 
 %% Plots 
 %Select either true or false for each task you want plots for
-plots12 = false;
-plots14 = false;
-plots15 = false;
-plots21 = false;
-plots22 = false;
-plots24 = false;
-plots25 = false;
+plots12 = true;
+plots14 = true;
+plots15 = true;
+plots21 = true;
+plots22 = true;
+plots24 = true;
+plots25 = true;
 
 
 %% 1.2 (Hover trim)
@@ -316,3 +316,5 @@ function sgtitle_figs(fig_nums, title_str)
         end
     end
 end
+
+figHandles = findall(0,'Type','figure'); for i = 1:numel(figHandles), saveas(figHandles(i), sprintf('Figure_%d.png', figHandles(i).Number)); end
