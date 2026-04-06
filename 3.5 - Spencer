@@ -1,0 +1,55 @@
+%%3.5
+%roll gains
+Kp = 5.8e-4;
+Kphi = 9.28e-4;
+
+%pitch gains
+Kq = 7.2e-4;
+Ktheta = 1.15e-3;
+
+K_3 = linspace(0,.25,2000); %Nm/rad, angular feedback control from problem 2.3
+
+eig_lat = zeros(3, length(K_3));
+eig_long = zeros(3, length(K_3));
+
+
+for i = 1:length(K_3)
+    K3 = K_3(i);
+
+    A_lat = [0,9.81,0;0,0,1;-K3/Ix,-Kphi/Ix,-Kp/Ix];
+
+    A_long = [0,-9.81,0;0,0,1; K3/Iy,-Ktheta/Iy,-Kq/Iy];
+
+    eig_lat(:,i) = eig(A_lat);
+    eig_long(:,i) = eig(A_long);
+    
+end
+figure; hold on;
+
+for i = 1:length(K_3)
+    plot(real(eig_lat(:,i)), imag(eig_lat(:,i)), 'b.');
+    plot(real(eig_long(:,i)), imag(eig_long(:,i)), 'r.');
+   
+end
+
+ xline(-1/1.25, '--y', '1.25 sec requirement');
+ xlabel('Real Axis');
+ ylabel('Imaginary Axis')
+ grid on;
+
+K3_final = [];
+
+for i = 1:length(K_3)
+    eig_all = [eig_lat(:,i); eig_long(:,i)];
+
+    real_part = all(abs(imag(eig_all))<(1e-5));
+
+    time_cons = all(real(eig_all) <= -.8);
+
+   if real_part && time_cons
+
+       K3_final = [K3_final, K_3(i)];
+   end
+end
+
+K3_selected = min(K3_final)
